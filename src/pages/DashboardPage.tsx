@@ -13,24 +13,88 @@ const DashboardPage: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedSwap, setSelectedSwap] = useState<Swap | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [swaps, setSwaps] = useState<Swap[]>([]);
   const [loading, setLoading] = useState(true);
   const { success, error } = useToast();
   const { user } = useAuth();
 
   useEffect(() => {
     if (user) {
-      fetchMessages();
+      fetchSwaps();
     }
   }, [user]);
+
+  const fetchSwaps = async () => {
+    try {
+      // Fetch swap requests where user is requester or receiver
+      const { data: requests, error: requestsError } = await supabase
+        .from('skill_swap_requests')
+        .select(`
+          *,
+          requester:profiles!skill_swap_requests_requester_id_fkey(*),
+          receiver:profiles!skill_swap_requests_receiver_id_fkey(*),
+          requested_skill:skills!skill_swap_requests_requested_skill_id_fkey(*),
+          offered_skill:skills!skill_swap_requests_offered_skill_id_fkey(*),
+          swaps(*)
+        `)
+        .or(`requester_id.eq.${user?.id},receiver_id.eq.${user?.id}`);
+
+      if (requestsError) throw requestsError;
+
+      // Transform to Swap format
+      const transformedSwaps: Swap[] = (requests || []).map((req: any) => {
+        const otherUser = req.requester_id === user?.id ? req.receiver : req.requester;
+        const swapData = req.swaps?.[0];
+        
+        return {
+          id: req.id,
+          user: otherUser?.name || 'Unknown User',
+          userId: otherUser?.id || '',
+          skill: req.requested_skill?.name || 'Unknown Skill',
+          skillId: req.requested_skill?.id || '',
+          status: swapData?.status || req.status,
+          createdAt: new Date(req.created_at),
+          updatedAt: new Date(req.updated_at),
+          userProfile: {
+            id: otherUser?.id || '',
+            name: otherUser?.name || 'Unknown User',
+            email: otherUser?.email || '',
+            bio: otherUser?.bio || '',
+            skillsOffered: [],
+            skillsWanted: [],
+            rating: otherUser?.rating || 0,
+            completedSwaps: otherUser?.completed_swaps || 0
+          }
+        };
+      });
+
+      setSwaps(transformedSwaps);
+    } catch (err) {
+      console.error('Error fetching swaps:', err);
+      error('Error', 'Failed to load swaps.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchMessages = async () => {
     if (!selectedSwap) return;
     
     try {
+      // Find the swap entry for this request
+      const { data: swapData, error: swapError } = await supabase
+        .from('swaps')
+        .select('id')
+        .eq('request_id', selectedSwap.id)
+        .maybeSingle();
+
+      if (swapError) throw swapError;
+      if (!swapData) return;
+
       const { data, error: fetchError } = await supabase
         .from('messages')
         .select('*')
-        .eq('swap_id', selectedSwap.id)
+        .eq('swap_id', swapData.id)
         .order('created_at', { ascending: true });
 
       if (fetchError) throw fetchError;
@@ -47,8 +111,6 @@ const DashboardPage: React.FC = () => {
       setMessages(formattedMessages);
     } catch (err) {
       console.error('Error fetching messages:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -72,6 +134,7 @@ const DashboardPage: React.FC = () => {
         'Swap accepted!',
         `You've accepted the ${swap.skill} swap with ${swap.user}.`
       );
+      await fetchSwaps(); // Refresh swaps
     } catch (err) {
       console.error('Error accepting swap:', err);
       error('Error', 'Failed to accept swap.');
@@ -91,6 +154,7 @@ const DashboardPage: React.FC = () => {
         'Swap declined',
         `The ${swap.skill} swap request has been declined.`
       );
+      await fetchSwaps(); // Refresh swaps
     } catch (err) {
       console.error('Error rejecting swap:', err);
       error('Error', 'Failed to decline swap.');
@@ -112,10 +176,19 @@ const DashboardPage: React.FC = () => {
     try {
       if (!selectedSwap) return;
 
+      // Find the swap entry
+      const { data: swapData, error: swapError } = await supabase
+        .from('swaps')
+        .select('id')
+        .eq('request_id', selectedSwap.id)
+        .single();
+
+      if (swapError) throw swapError;
+
       const { error: reviewError } = await supabase
         .from('reviews')
         .insert({
-          swap_id: selectedSwap.id,
+          swap_id: swapData.id,
           reviewer_id: user?.id,
           reviewed_id: review.userId,
           rating: review.rating,
@@ -125,12 +198,12 @@ const DashboardPage: React.FC = () => {
       if (reviewError) throw reviewError;
 
       // Update swap status to completed
-      const { error: swapError } = await supabase
+      const { error: updateError } = await supabase
         .from('swaps')
         .update({ status: 'completed' })
-        .eq('id', selectedSwap.id);
+        .eq('id', swapData.id);
 
-      if (swapError) throw swapError;
+      if (updateError) throw updateError;
 
       success(
         'Review submitted!',
@@ -138,6 +211,7 @@ const DashboardPage: React.FC = () => {
       );
       setIsRatingModalOpen(false);
       setSelectedSwap(null);
+      await fetchSwaps(); // Refresh swaps
     } catch (err) {
       console.error('Error submitting review:', err);
       error('Error', 'Failed to submit review.');
@@ -148,10 +222,23 @@ const DashboardPage: React.FC = () => {
     if (!selectedSwap || !user) return;
 
     try {
+      // Find the swap entry
+      const { data: swapData, error: swapError } = await supabase
+        .from('swaps')
+        .select('id')
+        .eq('request_id', selectedSwap.id)
+        .maybeSingle();
+
+      if (swapError) throw swapError;
+      if (!swapData) {
+        error('Error', 'Swap not found.');
+        return;
+      }
+
       const { error: msgError } = await supabase
         .from('messages')
         .insert({
-          swap_id: selectedSwap.id,
+          swap_id: swapData.id,
           sender_id: user.id,
           text: message,
           is_read: false
@@ -185,6 +272,7 @@ const DashboardPage: React.FC = () => {
   return (
     <>
       <Dashboard
+        swaps={swaps}
         onAcceptSwap={handleAcceptSwap}
         onRejectSwap={handleRejectSwap}
         onCompleteSwap={handleCompleteSwap}

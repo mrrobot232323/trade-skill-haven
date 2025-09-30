@@ -10,8 +10,62 @@ const Skills: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [loading, setLoading] = useState(true);
   const { success, error } = useToast();
   const { user } = useAuth();
+
+  useEffect(() => {
+    fetchSkills();
+  }, []);
+
+  const fetchSkills = async () => {
+    try {
+      // Fetch all skills with user information
+      const { data, error: skillsError } = await supabase
+        .from('user_skills')
+        .select(`
+          id,
+          type,
+          user_id,
+          skills (
+            id,
+            name,
+            description,
+            category
+          ),
+          profiles (
+            id,
+            name,
+            location,
+            rating
+          )
+        `)
+        .eq('type', 'offer');
+
+      if (skillsError) throw skillsError;
+
+      // Transform to Skill format
+      const transformedSkills: Skill[] = (data || []).map((item: any) => ({
+        id: item.skills.id,
+        name: item.skills.name,
+        description: item.skills.description || `Learn ${item.skills.name}`,
+        category: item.skills.category,
+        user: item.profiles?.name || 'Unknown User',
+        userId: item.user_id,
+        location: item.profiles?.location,
+        tags: [item.skills.category, item.skills.name],
+        createdAt: new Date()
+      }));
+
+      setSkills(transformedSkills);
+    } catch (err) {
+      console.error('Error fetching skills:', err);
+      error('Error', 'Failed to load skills.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleRequestSwap = async (skill: Skill) => {
     if (!user) {
@@ -27,7 +81,7 @@ const Skills: React.FC = () => {
         .eq('user_id', user.id)
         .eq('type', 'offer')
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (skillsError || !userSkills) {
         error('Error', 'Please add skills you can offer in your profile first.');
@@ -72,7 +126,7 @@ const Skills: React.FC = () => {
 
   return (
     <>
-      <SkillList onRequestSwap={handleRequestSwap} />
+      <SkillList skills={skills} loading={loading} onRequestSwap={handleRequestSwap} />
       <ChatBox
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}

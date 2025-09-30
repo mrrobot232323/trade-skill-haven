@@ -8,6 +8,7 @@ import { Swap } from '@/types';
 import Navbar from './Navbar';
 
 interface DashboardProps {
+  swaps?: Swap[];
   onAcceptSwap?: (swap: Swap) => void;
   onRejectSwap?: (swap: Swap) => void;
   onCompleteSwap?: (swap: Swap) => void;
@@ -232,6 +233,7 @@ const SwapCard: React.FC<{
 };
 
 const Dashboard: React.FC<DashboardProps> = ({
+  swaps: propSwaps,
   onAcceptSwap,
   onRejectSwap,
   onCompleteSwap,
@@ -239,9 +241,11 @@ const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('pending');
 
-  const pendingSwaps = mockSwaps.filter(swap => swap.status === 'pending');
-  const activeSwaps = mockSwaps.filter(swap => swap.status === 'active');
-  const completedSwaps = mockSwaps.filter(swap => swap.status === 'completed');
+  const swaps = propSwaps || mockSwaps;
+
+  const pendingSwaps = swaps.filter(swap => swap.status === 'pending');
+  const activeSwaps = swaps.filter(swap => swap.status === 'active');
+  const completedSwaps = swaps.filter(swap => swap.status === 'completed');
 
   const stats = [
     { label: 'Pending Requests', value: pendingSwaps.length, color: 'text-warning' },

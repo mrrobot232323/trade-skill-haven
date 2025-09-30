@@ -12,15 +12,20 @@ import Navbar from './Navbar';
 interface ProfilePageProps {
   userProfile?: UserProfile;
   onUpdateProfile?: (profile: UserProfile) => void;
+  onAddSkill?: (skillName: string, type: 'offer' | 'want') => Promise<void>;
+  onRemoveSkill?: (skillName: string, type: 'offer' | 'want') => Promise<void>;
 }
 
 const ProfilePage: React.FC<ProfilePageProps> = ({ 
   userProfile, 
-  onUpdateProfile 
+  onUpdateProfile,
+  onAddSkill,
+  onRemoveSkill
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [newSkillOffered, setNewSkillOffered] = useState('');
   const [newSkillWanted, setNewSkillWanted] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
   
   const [profile, setProfile] = useState<UserProfile>(userProfile || {
     id: '1',
@@ -28,11 +33,18 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
     email: 'alex.johnson@example.com',
     bio: 'Passionate web developer and guitar enthusiast. Love teaching coding and learning new languages!',
     profilePicture: '',
-    skillsOffered: ['Web Development', 'React', 'JavaScript', 'Guitar Playing'],
-    skillsWanted: ['Spanish Language', 'Photography', 'Cooking', 'Digital Marketing'],
-    rating: 4.8,
-    completedSwaps: 23
+    skillsOffered: [],
+    skillsWanted: [],
+    rating: 0,
+    completedSwaps: 0
   });
+
+  // Update profile state when userProfile prop changes
+  React.useEffect(() => {
+    if (userProfile) {
+      setProfile(userProfile);
+    }
+  }, [userProfile]);
 
   const handleSave = () => {
     if (onUpdateProfile) {
@@ -41,31 +53,29 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
     setIsEditing(false);
   };
 
-  const addSkill = (type: 'offered' | 'wanted') => {
+  const addSkill = async (type: 'offered' | 'wanted') => {
     const newSkill = type === 'offered' ? newSkillOffered : newSkillWanted;
-    if (!newSkill.trim()) return;
+    if (!newSkill.trim() || isAdding) return;
 
-    setProfile(prev => ({
-      ...prev,
-      [type === 'offered' ? 'skillsOffered' : 'skillsWanted']: [
-        ...prev[type === 'offered' ? 'skillsOffered' : 'skillsWanted'],
-        newSkill.trim()
-      ]
-    }));
+    setIsAdding(true);
+    
+    if (onAddSkill) {
+      await onAddSkill(newSkill.trim(), type === 'offered' ? 'offer' : 'want');
+    }
 
     if (type === 'offered') {
       setNewSkillOffered('');
     } else {
       setNewSkillWanted('');
     }
+    
+    setIsAdding(false);
   };
 
-  const removeSkill = (type: 'offered' | 'wanted', index: number) => {
-    setProfile(prev => ({
-      ...prev,
-      [type === 'offered' ? 'skillsOffered' : 'skillsWanted']: 
-        prev[type === 'offered' ? 'skillsOffered' : 'skillsWanted'].filter((_, i) => i !== index)
-    }));
+  const removeSkill = async (type: 'offered' | 'wanted', skillName: string) => {
+    if (onRemoveSkill) {
+      await onRemoveSkill(skillName, type === 'offered' ? 'offer' : 'want');
+    }
   };
 
   return (
@@ -173,7 +183,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                     {skill}
                     {isEditing && (
                       <button
-                        onClick={() => removeSkill('offered', index)}
+                        onClick={() => removeSkill('offered', skill)}
                         className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="h-3 w-3" />
@@ -189,12 +199,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                     placeholder="Add a skill you can offer"
                     value={newSkillOffered}
                     onChange={(e) => setNewSkillOffered(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addSkill('offered')}
+                    onKeyPress={(e) => e.key === 'Enter' && !isAdding && addSkill('offered')}
+                    disabled={isAdding}
                   />
                   <Button 
                     onClick={() => addSkill('offered')} 
                     size="icon"
                     variant="outline"
+                    disabled={isAdding}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -219,7 +231,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                     {skill}
                     {isEditing && (
                       <button
-                        onClick={() => removeSkill('wanted', index)}
+                        onClick={() => removeSkill('wanted', skill)}
                         className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="h-3 w-3" />
@@ -235,12 +247,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                     placeholder="Add a skill you want to learn"
                     value={newSkillWanted}
                     onChange={(e) => setNewSkillWanted(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addSkill('wanted')}
+                    onKeyPress={(e) => e.key === 'Enter' && !isAdding && addSkill('wanted')}
+                    disabled={isAdding}
                   />
                   <Button 
                     onClick={() => addSkill('wanted')} 
                     size="icon"
                     variant="outline"
+                    disabled={isAdding}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>

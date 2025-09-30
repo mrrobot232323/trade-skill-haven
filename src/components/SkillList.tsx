@@ -9,6 +9,8 @@ import { Skill } from '@/types';
 import Navbar from './Navbar';
 
 interface SkillListProps {
+  skills?: Skill[];
+  loading?: boolean;
   onRequestSwap?: (skill: Skill) => void;
 }
 
@@ -177,10 +179,13 @@ const SkillCard: React.FC<{ skill: Skill; onRequestSwap: (skill: Skill) => void 
   );
 };
 
-const SkillList: React.FC<SkillListProps> = ({ onRequestSwap }) => {
+const SkillList: React.FC<SkillListProps> = ({ skills: propSkills, loading: propLoading, onRequestSwap }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [sortBy, setSortBy] = useState('recent');
+
+  const skills = propSkills || mockSkills;
+  const loading = propLoading ?? false;
 
   const filteredSkills = mockSkills.filter(skill => {
     const matchesSearch = skill.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -277,7 +282,14 @@ const SkillList: React.FC<SkillListProps> = ({ onRequestSwap }) => {
         </div>
 
         {/* Skills Grid */}
-        {filteredSkills.length > 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent mb-4"></div>
+              <p className="text-muted-foreground">Loading skills...</p>
+            </div>
+          </div>
+        ) : filteredSkills.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredSkills.map((skill, index) => (
               <div
