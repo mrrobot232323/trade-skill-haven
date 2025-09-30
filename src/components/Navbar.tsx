@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Search, User, Bell } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, Search, User, Bell, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/Toast';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { success } = useToast();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -50,23 +55,41 @@ const Navbar: React.FC = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="relative">
-              <Search className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 bg-accent rounded-full text-xs text-white flex items-center justify-center">
-                3
-              </span>
-            </Button>
-            <Button variant="ghost" size="icon">
-              <User className="h-5 w-5" />
-            </Button>
-            <Link to="/auth">
-              <Button className="bg-gradient-primary hover:opacity-90 transition-opacity">
-                Login
-              </Button>
-            </Link>
+            {user ? (
+              <>
+                <Button variant="ghost" size="icon" className="relative">
+                  <Search className="h-5 w-5" />
+                </Button>
+                <Button variant="ghost" size="icon" className="relative">
+                  <Bell className="h-5 w-5" />
+                  <span className="absolute -top-1 -right-1 h-4 w-4 bg-accent rounded-full text-xs text-white flex items-center justify-center">
+                    3
+                  </span>
+                </Button>
+                <Link to="/profile">
+                  <Button variant="ghost" size="icon">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </Link>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={async () => {
+                    await signOut();
+                    success('Logged out', 'You have been successfully logged out.');
+                    navigate('/');
+                  }}
+                >
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </>
+            ) : (
+              <Link to="/auth">
+                <Button className="bg-gradient-primary hover:opacity-90 transition-opacity">
+                  Login
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -100,11 +123,26 @@ const Navbar: React.FC = () => {
                 </Link>
               ))}
               <div className="px-3 py-2">
-                <Link to="/auth" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full bg-gradient-primary">
-                    Login / Signup
+                {user ? (
+                  <Button 
+                    className="w-full" 
+                    variant="outline"
+                    onClick={async () => {
+                      await signOut();
+                      success('Logged out', 'You have been successfully logged out.');
+                      navigate('/');
+                      setIsOpen(false);
+                    }}
+                  >
+                    Logout
                   </Button>
-                </Link>
+                ) : (
+                  <Link to="/auth" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full bg-gradient-primary">
+                      Login / Signup
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>

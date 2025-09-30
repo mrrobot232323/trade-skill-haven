@@ -1,38 +1,46 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthForm from '@/components/AuthForm';
 import { AuthData } from '@/types';
 import { useToast } from '@/components/Toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
   const { success, error } = useToast();
+  const { signUp, signIn, user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (data: AuthData) => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      let result;
       
-      // Mock validation
-      if (data.email === 'test@example.com' && data.password === 'password') {
-        success('Welcome back!', 'You have been successfully logged in.');
-        navigate('/dashboard');
+      if (data.name) {
+        // Sign up
+        result = await signUp(data.email, data.password, data.name);
+        if (!result.error) {
+          success('Account created!', 'Welcome to SkillSwap! You can now log in.');
+        }
       } else {
-        // Simulate successful signup/login for demo
-        success(
-          data.name ? 'Account created!' : 'Welcome back!',
-          data.name 
-            ? 'Your account has been created successfully.' 
-            : 'You have been successfully logged in.'
-        );
-        navigate('/dashboard');
+        // Sign in
+        result = await signIn(data.email, data.password);
+        if (!result.error) {
+          success('Welcome back!', 'You have been successfully logged in.');
+          navigate('/dashboard');
+        }
+      }
+
+      if (result.error) {
+        error('Authentication failed', result.error.message);
+        throw result.error;
       }
     } catch (err) {
-      error(
-        'Authentication failed',
-        'Please check your credentials and try again.'
-      );
-      throw err;
+      console.error('Auth error:', err);
     }
   };
 
