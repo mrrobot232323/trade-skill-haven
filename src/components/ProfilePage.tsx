@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Edit, Camera, Plus, X, Star } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Edit, Camera, Plus, X, Star, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,16 +8,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { UserProfile } from '@/types';
 import Navbar from './Navbar';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/Toast';
 
 interface ProfilePageProps {
   userProfile?: UserProfile;
+  userId?: string;
   onUpdateProfile?: (profile: UserProfile) => void;
   onAddSkill?: (skillName: string, type: 'offer' | 'want') => Promise<void>;
   onRemoveSkill?: (skillName: string, type: 'offer' | 'want') => Promise<void>;
 }
 
 const ProfilePage: React.FC<ProfilePageProps> = ({ 
-  userProfile, 
+  userProfile,
+  userId,
   onUpdateProfile,
   onAddSkill,
   onRemoveSkill
@@ -26,6 +30,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
   const [newSkillOffered, setNewSkillOffered] = useState('');
   const [newSkillWanted, setNewSkillWanted] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { success, error: showError } = useToast();
   
   const [profile, setProfile] = useState<UserProfile>(userProfile || {
     id: '1',
@@ -78,6 +85,47 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
     }
   };
 
+  const handleProfilePictureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !userId) return;
+
+    try {
+      setUploading(true);
+
+      // Upload to storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('profile-pictures')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-pictures')
+        .getPublicUrl(fileName);
+
+      // Update profile with new picture URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ profile_pic: publicUrl })
+        .eq('id', userId);
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      setProfile(prev => ({ ...prev, profilePicture: publicUrl }));
+      success('Profile picture updated!', 'Your profile picture has been updated successfully.');
+    } catch (err) {
+      console.error('Error uploading profile picture:', err);
+      showError('Upload failed', 'Failed to upload profile picture. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-secondary">
       <Navbar />
@@ -89,16 +137,39 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
             <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
               {/* Profile Picture */}
               <div className="relative group">
-                <div className="w-32 h-32 bg-gradient-primary rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-elegant">
-                  {profile.name.split(' ').map(n => n[0]).join('')}
-                </div>
+                {profile.profilePicture ? (
+                  <img 
+                    src={profile.profilePicture} 
+                    alt={profile.name}
+                    className="w-32 h-32 rounded-full object-cover shadow-elegant"
+                  />
+                ) : (
+                  <div className="w-32 h-32 bg-gradient-primary rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-elegant">
+                    {profile.name.split(' ').map(n => n[0]).join('')}
+                  </div>
+                )}
                 {isEditing && (
-                  <Button
-                    size="icon"
-                    className="absolute bottom-0 right-0 rounded-full bg-accent hover:bg-accent/90"
-                  >
-                    <Camera className="h-4 w-4" />
-                  </Button>
+                  <>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfilePictureUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      size="icon"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="absolute bottom-0 right-0 rounded-full bg-accent hover:bg-accent/90"
+                    >
+                      {uploading ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      ) : (
+                        <Camera className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </>
                 )}
               </div>
 

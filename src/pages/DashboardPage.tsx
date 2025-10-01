@@ -24,6 +24,39 @@ const DashboardPage: React.FC = () => {
     }
   }, [user]);
 
+  // Real-time message updates
+  useEffect(() => {
+    if (!selectedSwap) return;
+
+    const channel = supabase
+      .channel('messages-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `swap_id=eq.${selectedSwap.id}`
+        },
+        (payload) => {
+          const newMsg: Message = {
+            id: payload.new.id,
+            sender: payload.new.sender_id === user?.id ? 'You' : selectedSwap.user,
+            senderId: payload.new.sender_id,
+            text: payload.new.text,
+            timestamp: new Date(payload.new.created_at),
+            isRead: payload.new.is_read
+          };
+          setMessages(prev => [...prev, newMsg]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedSwap, user]);
+
   const fetchSwaps = async () => {
     try {
       // Fetch swap requests where user is requester or receiver

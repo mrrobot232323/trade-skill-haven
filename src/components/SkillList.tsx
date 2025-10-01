@@ -187,7 +187,7 @@ const SkillList: React.FC<SkillListProps> = ({ skills: propSkills, loading: prop
   const skills = propSkills || mockSkills;
   const loading = propLoading ?? false;
 
-  const filteredSkills = mockSkills.filter(skill => {
+  const filteredSkills = skills.filter(skill => {
     const matchesSearch = skill.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          skill.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          skill.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));

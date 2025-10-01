@@ -185,7 +185,8 @@ const Profile: React.FC = () => {
 
   return (
     <ProfilePage 
-      userProfile={profile || undefined} 
+      userProfile={profile || undefined}
+      userId={user?.id}
       onUpdateProfile={handleUpdateProfile}
       onAddSkill={handleAddSkill}
       onRemoveSkill={handleRemoveSkill}
