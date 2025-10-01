@@ -7,6 +7,7 @@ import { Match } from '@/types';
 import Navbar from './Navbar';
 
 interface MatchFinderProps {
+  matches?: Match[];
   onRequestSwap?: (match: Match) => void;
 }
 
@@ -218,7 +219,9 @@ const MatchCard: React.FC<{ match: Match; onRequestSwap: (match: Match) => void 
   );
 };
 
-const MatchFinder: React.FC<MatchFinderProps> = ({ onRequestSwap }) => {
+const MatchFinder: React.FC<MatchFinderProps> = ({ matches: propMatches, onRequestSwap }) => {
+  const matches = propMatches || mockMatches;
+
   const handleRequestSwap = (match: Match) => {
     if (onRequestSwap) {
       onRequestSwap(match);
@@ -247,14 +250,16 @@ const MatchFinder: React.FC<MatchFinderProps> = ({ onRequestSwap }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card className="text-center shadow-soft border-0 bg-card/60">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-primary">{mockMatches.length}</div>
+              <div className="text-2xl font-bold text-primary">{matches.length}</div>
               <div className="text-sm text-muted-foreground">Perfect Matches</div>
             </CardContent>
           </Card>
           <Card className="text-center shadow-soft border-0 bg-card/60">
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-accent">
-                {Math.round(mockMatches.reduce((acc, match) => acc + match.compatibility, 0) / mockMatches.length)}%
+                {matches.length > 0 
+                  ? Math.round(matches.reduce((acc, match) => acc + match.compatibility, 0) / matches.length)
+                  : 0}%
               </div>
               <div className="text-sm text-muted-foreground">Avg Compatibility</div>
             </CardContent>
@@ -262,7 +267,7 @@ const MatchFinder: React.FC<MatchFinderProps> = ({ onRequestSwap }) => {
           <Card className="text-center shadow-soft border-0 bg-card/60">
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-success">
-                {mockMatches.filter(m => m.compatibility >= 90).length}
+                {matches.filter(m => m.compatibility >= 90).length}
               </div>
               <div className="text-sm text-muted-foreground">Perfect Matches</div>
             </CardContent>
@@ -271,7 +276,7 @@ const MatchFinder: React.FC<MatchFinderProps> = ({ onRequestSwap }) => {
 
         {/* Matches Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {mockMatches.map((match, index) => (
+          {matches.map((match, index) => (
             <div
               key={match.id}
               style={{ animationDelay: `${index * 0.1}s` }}
@@ -281,8 +286,8 @@ const MatchFinder: React.FC<MatchFinderProps> = ({ onRequestSwap }) => {
           ))}
         </div>
 
-        {/* No matches state would go here */}
-        {mockMatches.length === 0 && (
+        {/* No matches state */}
+        {matches.length === 0 && (
           <Card className="text-center p-12 shadow-soft border-0 bg-card/80 backdrop-blur">
             <div className="space-y-4">
               <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">

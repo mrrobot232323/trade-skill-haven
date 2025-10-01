@@ -8,7 +8,7 @@ import Auth from "./pages/Auth";
 import Skills from "./pages/Skills";
 import Profile from "./pages/Profile";
 import DashboardPage from "./pages/DashboardPage";
-import Matches from "./pages/Matches";
+import MatchesPage from "./pages/MatchesPage";
 import NotFound from "./pages/NotFound";
 import { ToastContainer, useToast } from "@/components/Toast";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -27,7 +27,7 @@ const AppContent = () => {
         <Route path="/skills" element={<ProtectedRoute><Skills /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-        <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
+        <Route path="/matches" element={<ProtectedRoute><MatchesPage /></ProtectedRoute>} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
