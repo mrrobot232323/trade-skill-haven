@@ -20,10 +20,10 @@ const Profile: React.FC = () => {
 
   const fetchProfile = async () => {
     try {
-      // Fetch profile data
+      // Fetch profile data - explicitly select fields including email only for own profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, name, email, bio, profile_pic, rating, completed_swaps')
         .eq('id', user?.id)
         .single();
 
@@ -76,6 +76,7 @@ const Profile: React.FC = () => {
 
   const handleUpdateProfile = async (updatedProfile: UserProfile) => {
     try {
+      // Only update allowed fields, never update email through profile updates
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
