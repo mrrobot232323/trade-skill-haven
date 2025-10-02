@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Filter, MapPin, Star, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -90,6 +91,8 @@ const SkillCard: React.FC<{ skill: Skill; onRequestSwap: (skill: Skill) => void 
   skill, 
   onRequestSwap 
 }) => {
+  const [isRequesting, setIsRequesting] = useState(false);
+  const navigate = useNavigate();
   const timeAgo = (date: Date) => {
     const now = new Date();
     const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
@@ -100,8 +103,9 @@ const SkillCard: React.FC<{ skill: Skill; onRequestSwap: (skill: Skill) => void 
   };
 
   return (
-    <Card className="group hover:shadow-elegant transition-all duration-300 cursor-pointer border-0 bg-card/80 backdrop-blur animate-fade-in">
-      <CardContent className="p-6">
+    <Card className="group hover:shadow-elegant hover:scale-[1.02] transition-all duration-300 cursor-pointer border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-xl animate-fade-in overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+      <CardContent className="p-6 relative z-10">
         <div className="space-y-4">
           {/* Header */}
           <div className="flex justify-between items-start">
@@ -142,11 +146,17 @@ const SkillCard: React.FC<{ skill: Skill; onRequestSwap: (skill: Skill) => void 
           {/* Footer */}
           <div className="flex items-center justify-between pt-2 border-t border-border/50">
             <div className="space-y-1">
-              <div className="flex items-center space-x-2 text-sm">
-                <div className="w-6 h-6 bg-gradient-primary rounded-full flex items-center justify-center text-xs text-white font-medium">
+              <div 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/profile/${skill.userId}`);
+                }}
+                className="flex items-center space-x-2 text-sm cursor-pointer hover:opacity-80 transition-opacity"
+              >
+                <div className="w-6 h-6 bg-gradient-primary rounded-full flex items-center justify-center text-xs text-white font-medium shadow-md">
                   {skill.user.split(' ').map(n => n[0]).join('')}
                 </div>
-                <span className="font-medium text-foreground">{skill.user}</span>
+                <span className="font-medium text-foreground group-hover:text-primary transition-colors">{skill.user}</span>
                 <div className="flex items-center space-x-1">
                   <Star className="h-3 w-3 text-warning fill-warning" />
                   <span className="text-xs text-muted-foreground">4.8</span>
@@ -167,10 +177,22 @@ const SkillCard: React.FC<{ skill: Skill; onRequestSwap: (skill: Skill) => void 
             </div>
             
             <Button 
-              onClick={() => onRequestSwap(skill)}
-              className="bg-gradient-primary hover:opacity-90 transition-opacity text-sm px-4 py-2"
+              onClick={async () => {
+                setIsRequesting(true);
+                await onRequestSwap(skill);
+                setTimeout(() => setIsRequesting(false), 2000);
+              }}
+              disabled={isRequesting}
+              className="bg-gradient-primary hover:opacity-90 transition-all duration-300 hover:scale-105 active:scale-95 text-sm px-4 py-2 disabled:opacity-50"
             >
-              Request Swap
+              {isRequesting ? (
+                <span className="flex items-center gap-2">
+                  <span className="animate-spin">⏳</span>
+                  Sending...
+                </span>
+              ) : (
+                'Request Swap'
+              )}
             </Button>
           </div>
         </div>

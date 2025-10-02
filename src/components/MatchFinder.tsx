@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ArrowRight, Star, MessageCircle, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -91,6 +92,8 @@ const MatchCard: React.FC<{ match: Match; onRequestSwap: (match: Match) => void 
   match, 
   onRequestSwap 
 }) => {
+  const [isRequesting, setIsRequesting] = useState(false);
+  const navigate = useNavigate();
   const getCompatibilityColor = (score: number) => {
     if (score >= 90) return 'text-success';
     if (score >= 80) return 'text-warning';
@@ -104,11 +107,15 @@ const MatchCard: React.FC<{ match: Match; onRequestSwap: (match: Match) => void 
   };
 
   return (
-    <Card className="group hover:shadow-elegant transition-all duration-300 border-0 bg-card/80 backdrop-blur animate-fade-in">
-      <CardHeader className="pb-4">
+    <Card className="group hover:shadow-elegant hover:scale-[1.02] transition-all duration-300 border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-xl animate-fade-in overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+      <CardHeader className="pb-4 relative z-10">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold">
+          <div 
+            onClick={() => navigate(`/profile/${match.userId}`)}
+            className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold shadow-lg">
               {match.user.split(' ').map(n => n[0]).join('')}
             </div>
             <div>
@@ -134,7 +141,7 @@ const MatchCard: React.FC<{ match: Match; onRequestSwap: (match: Match) => void 
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 relative z-10">
         {/* Skill Exchange */}
         <div className="bg-gradient-secondary/30 rounded-lg p-4 space-y-3">
           <div className="text-center">
@@ -205,12 +212,24 @@ const MatchCard: React.FC<{ match: Match; onRequestSwap: (match: Match) => void 
         {/* Actions */}
         <div className="flex space-x-2 pt-2">
           <Button 
-            onClick={() => onRequestSwap(match)}
-            className="flex-1 bg-gradient-primary hover:opacity-90 transition-opacity"
+            onClick={async () => {
+              setIsRequesting(true);
+              await onRequestSwap(match);
+              setTimeout(() => setIsRequesting(false), 2000);
+            }}
+            disabled={isRequesting}
+            className="flex-1 bg-gradient-primary hover:opacity-90 transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50"
           >
-            Request Swap
+            {isRequesting ? (
+              <span className="flex items-center gap-2">
+                <span className="animate-spin">⏳</span>
+                Sending...
+              </span>
+            ) : (
+              'Request Swap'
+            )}
           </Button>
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" className="hover:scale-105 transition-transform">
             <MessageCircle className="h-4 w-4" />
           </Button>
         </div>

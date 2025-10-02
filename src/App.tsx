@@ -10,6 +10,7 @@ import Profile from "./pages/Profile";
 import DashboardPage from "./pages/DashboardPage";
 import MatchesPage from "./pages/MatchesPage";
 import Chats from "./pages/Chats";
+import UserProfileView from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
 import { ToastContainer, useToast } from "@/components/Toast";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -27,6 +28,7 @@ const AppContent = () => {
         <Route path="/auth" element={<Auth />} />
         <Route path="/skills" element={<ProtectedRoute><Skills /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/profile/:userId" element={<ProtectedRoute><UserProfileView /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
         <Route path="/matches" element={<ProtectedRoute><MatchesPage /></ProtectedRoute>} />
         <Route path="/chats" element={<ProtectedRoute><Chats /></ProtectedRoute>} />

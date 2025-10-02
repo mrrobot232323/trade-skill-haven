@@ -271,14 +271,15 @@ const Chats: React.FC = () => {
                 {filteredConversations.map((conversation) => (
                   <Card
                     key={conversation.id}
-                    className={`cursor-pointer transition-all duration-200 hover:shadow-elegant border-0 ${
+                    className={`cursor-pointer transition-all duration-300 hover:shadow-elegant hover:scale-[1.02] border-0 overflow-hidden ${
                       selectedConversation?.id === conversation.id
-                        ? 'bg-primary/10 border-l-4 border-l-primary'
-                        : 'bg-card/80 backdrop-blur'
+                        ? 'bg-gradient-to-br from-primary/20 to-primary/10 border-l-4 border-l-primary shadow-md'
+                        : 'bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-xl'
                     }`}
                     onClick={() => handleConversationClick(conversation)}
                   >
-                    <CardContent className="p-4">
+                    <div className={`absolute inset-0 bg-gradient-primary opacity-0 transition-opacity duration-300 ${selectedConversation?.id === conversation.id ? 'opacity-5' : 'hover:opacity-5'}`}></div>
+                    <CardContent className="p-4 relative z-10">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
@@ -317,8 +318,8 @@ const Chats: React.FC = () => {
             {/* Chat Area */}
             <div className="lg:col-span-2">
               {selectedConversation ? (
-                <Card className="shadow-elegant border-0 bg-card/95 backdrop-blur h-[600px] flex flex-col">
-                  <div className="p-4 border-b border-border/50">
+                <Card className="shadow-elegant border-0 bg-gradient-to-br from-card/95 to-card/90 backdrop-blur-xl h-[600px] flex flex-col overflow-hidden">
+                  <div className="p-4 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
                         {selectedConversation.otherUser.name.split(' ').map(n => n[0]).join('')}
@@ -383,7 +384,7 @@ const Chats: React.FC = () => {
                   </div>
                 </Card>
               ) : (
-                <Card className="shadow-elegant border-0 bg-card/95 backdrop-blur h-[600px] flex items-center justify-center">
+                <Card className="shadow-elegant border-0 bg-gradient-to-br from-card/95 to-card/90 backdrop-blur-xl h-[600px] flex items-center justify-center">
                   <div className="text-center">
                     <MessageCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
                     <h3 className="text-lg font-medium text-foreground mb-2">
