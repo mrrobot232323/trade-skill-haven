@@ -54,7 +54,7 @@ const NotificationDropdown: React.FC = () => {
 
       if (error) throw error;
 
-      const notifs: Notification[] = (requests || []).map((req: any) => ({
+      const swapNotifs: Notification[] = (requests || []).map((req: any) => ({
         id: req.id,
         type: 'swap_request' as const,
         title: 'New Swap Request',
@@ -64,7 +64,34 @@ const NotificationDropdown: React.FC = () => {
         actionUrl: '/dashboard'
       }));
 
-      setNotifications(notifs);
+      // Fetch accepted requests as match notifications
+      const { data: acceptedRequests, error: acceptedError } = await supabase
+        .from('skill_swap_requests')
+        .select(`
+          *,
+          receiver:profiles!skill_swap_requests_receiver_id_fkey(name),
+          requested_skill:skills!skill_swap_requests_requested_skill_id_fkey(name)
+        `)
+        .eq('requester_id', user.id)
+        .eq('status', 'accepted')
+        .order('updated_at', { ascending: false })
+        .limit(5);
+
+      if (acceptedError) throw acceptedError;
+
+      const matchNotifs: Notification[] = (acceptedRequests || []).map((req: any) => ({
+        id: `match-${req.id}`,
+        type: 'swap_accepted' as const,
+        title: 'Match Found! 🎉',
+        message: `${req.receiver.name} accepted your request for ${req.requested_skill.name}`,
+        isRead: false,
+        createdAt: new Date(req.updated_at),
+        actionUrl: '/chats'
+      }));
+
+      setNotifications([...swapNotifs, ...matchNotifs].sort(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+      ));
     } catch (err) {
       console.error('Error fetching notifications:', err);
     }

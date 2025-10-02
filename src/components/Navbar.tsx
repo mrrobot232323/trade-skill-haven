@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, User, LogOut } from 'lucide-react';
+import { Menu, X, Search, User, LogOut, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/Toast';
@@ -19,6 +19,7 @@ const Navbar: React.FC = () => {
     { name: 'Home', path: '/' },
     { name: 'Find Skills', path: '/skills' },
     { name: 'Matches', path: '/matches' },
+    { name: 'Chats', path: '/chats' },
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Profile', path: '/profile' },
   ];
