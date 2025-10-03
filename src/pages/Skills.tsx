@@ -137,8 +137,8 @@ const Skills: React.FC = () => {
 
       setSelectedSkill(skill);
       success(
-        'Swap request sent!',
-        `Your request to learn ${skill.name} has been sent to ${skill.user}.`
+        'Request sent!',
+        `Your swap request for ${skill.name} has been sent to ${skill.user}. You'll be notified when they respond.`
       );
     } catch (err) {
       console.error('Error requesting swap:', err);

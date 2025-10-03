@@ -67,7 +67,7 @@ const Chats: React.FC = () => {
     if (!user) return;
 
     try {
-      // Fetch all swaps where user is involved
+      // Fetch all swaps where user is involved (both active and completed)
       const { data: swapsData, error: swapsError } = await supabase
         .from('swaps')
         .select(`
@@ -81,7 +81,7 @@ const Chats: React.FC = () => {
             requested_skill:skills!skill_swap_requests_requested_skill_id_fkey(name)
           )
         `)
-        .eq('status', 'active');
+        .in('status', ['active', 'completed']);
 
       if (swapsError) throw swapsError;
 

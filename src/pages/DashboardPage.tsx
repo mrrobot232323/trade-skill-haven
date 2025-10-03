@@ -165,9 +165,15 @@ const DashboardPage: React.FC = () => {
 
       success(
         'Swap accepted!',
-        `You've accepted the ${swap.skill} swap with ${swap.user}.`
+        `You can now chat with ${swap.user}. Redirecting to chats...`
       );
+      
       await fetchSwaps(); // Refresh swaps
+      
+      // Navigate to chats after 1.5 seconds
+      setTimeout(() => {
+        window.location.href = '/chats';
+      }, 1500);
     } catch (err) {
       console.error('Error accepting swap:', err);
       error('Error', 'Failed to accept swap.');
