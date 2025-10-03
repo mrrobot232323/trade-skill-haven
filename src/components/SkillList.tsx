@@ -1,91 +1,24 @@
 import React, { useState } from 'react';
-import { Search, Filter, MapPin, Star, Clock } from 'lucide-react';
+import { ArrowRight, Star, MapPin, Search, X, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Skill } from '@/types';
 import Navbar from './Navbar';
 
 interface SkillListProps {
-  skills?: Skill[];
+  skills: Skill[];
   loading?: boolean;
-  onRequestSwap?: (skill: Skill) => void;
+  onRequestSwap: (skill: Skill) => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
+  categories?: string[];
+  selectedCategory?: string | null;
+  onCategoryClick?: (category: string) => void;
+  onClearFilters?: () => void;
 }
-
-// Mock data for demo
-const mockSkills: Skill[] = [
-  {
-    id: '1',
-    name: 'React Development',
-    description: 'Learn modern React with hooks, context, and state management. Perfect for beginners to intermediate developers.',
-    category: 'Programming',
-    user: 'Sarah Chen',
-    userId: 'user1',
-    location: 'San Francisco, CA',
-    tags: ['React', 'JavaScript', 'Frontend'],
-    createdAt: new Date('2024-01-15')
-  },
-  {
-    id: '2',
-    name: 'Spanish Conversation',
-    description: 'Native Spanish speaker offering conversational practice and cultural insights for all levels.',
-    category: 'Languages',
-    user: 'Carlos Rodriguez',
-    userId: 'user2',
-    location: 'Madrid, Spain',
-    tags: ['Spanish', 'Conversation', 'Culture'],
-    createdAt: new Date('2024-01-20')
-  },
-  {
-    id: '3',
-    name: 'Guitar Lessons',
-    description: 'Acoustic and electric guitar lessons from beginner to advanced. 10+ years of teaching experience.',
-    category: 'Music',
-    user: 'Mike Johnson',
-    userId: 'user3',
-    location: 'Austin, TX',
-    tags: ['Guitar', 'Music', 'Acoustic'],
-    createdAt: new Date('2024-01-18')
-  },
-  {
-    id: '4',
-    name: 'Digital Photography',
-    description: 'Professional photographer teaching composition, lighting, and post-processing techniques.',
-    category: 'Art & Design',
-    user: 'Emma Wilson',
-    userId: 'user4',
-    location: 'New York, NY',
-    tags: ['Photography', 'Lightroom', 'Composition'],
-    createdAt: new Date('2024-01-22')
-  },
-  {
-    id: '5',
-    name: 'Python Programming',
-    description: 'Learn Python from scratch or advance your skills with data science and automation projects.',
-    category: 'Programming',
-    user: 'David Kim',
-    userId: 'user5',
-    location: 'Seattle, WA',
-    tags: ['Python', 'Data Science', 'Automation'],
-    createdAt: new Date('2024-01-25')
-  },
-  {
-    id: '6',
-    name: 'Italian Cooking',
-    description: 'Authentic Italian recipes and cooking techniques passed down through generations.',
-    category: 'Cooking',
-    user: 'Giuseppe Rossi',
-    userId: 'user6',
-    location: 'Rome, Italy',
-    tags: ['Cooking', 'Italian', 'Recipes'],
-    createdAt: new Date('2024-01-28')
-  }
-];
-
-const categories = ['All Categories', 'Programming', 'Languages', 'Music', 'Art & Design', 'Cooking', 'Sports'];
 
 const SkillCard: React.FC<{ skill: Skill; onRequestSwap: (skill: Skill) => void }> = ({ 
   skill, 
@@ -93,256 +26,223 @@ const SkillCard: React.FC<{ skill: Skill; onRequestSwap: (skill: Skill) => void 
 }) => {
   const [isRequesting, setIsRequesting] = useState(false);
   const navigate = useNavigate();
-  const timeAgo = (date: Date) => {
-    const now = new Date();
-    const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (diffInDays === 0) return 'Today';
-    if (diffInDays === 1) return '1 day ago';
-    return `${diffInDays} days ago`;
-  };
 
   return (
-    <Card className="group hover:shadow-elegant hover:scale-[1.02] transition-all duration-300 cursor-pointer border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-xl animate-fade-in overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
-      <CardContent className="p-6 relative z-10">
-        <div className="space-y-4">
-          {/* Header */}
-          <div className="flex justify-between items-start">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-                {skill.name}
-              </h3>
-              <p className="text-sm text-muted-foreground">{skill.category}</p>
+    <Card className="group hover-lift glass-card overflow-hidden h-full flex flex-col relative">
+      <div className="absolute inset-0 bg-gradient-hero opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
+      
+      <CardHeader className="pb-3 relative z-10 space-y-3">
+        <div className="flex items-center justify-between">
+          <Badge 
+            variant="secondary" 
+            className="bg-gradient-primary text-primary-foreground shadow-soft font-medium"
+          >
+            {skill.category}
+          </Badge>
+          {skill.location && (
+            <div className="flex items-center space-x-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
+              <MapPin className="h-3 w-3" />
+              <span>{skill.location}</span>
             </div>
-            <Badge variant="secondary" className="text-xs">
-              {skill.category}
-            </Badge>
-          </div>
-
-          {/* Description */}
-          <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">
+          )}
+        </div>
+        
+        <div className="space-y-2">
+          <CardTitle className="text-2xl text-foreground group-hover:gradient-text transition-all">
+            {skill.name}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
             {skill.description}
           </p>
+        </div>
+      </CardHeader>
 
-          {/* Tags */}
-          <div className="flex flex-wrap gap-1">
-            {skill.tags.slice(0, 3).map((tag, index) => (
-              <Badge 
-                key={index} 
-                variant="outline" 
-                className="text-xs px-2 py-1 border-primary/20 text-primary/80"
-              >
-                {tag}
-              </Badge>
-            ))}
-            {skill.tags.length > 3 && (
-              <Badge variant="outline" className="text-xs px-2 py-1">
-                +{skill.tags.length - 3} more
-              </Badge>
-            )}
+      <CardContent className="space-y-4 relative z-10 flex-1 flex flex-col">
+        <div 
+          onClick={() => navigate(`/profile/${skill.userId}`)}
+          className="flex items-center space-x-3 cursor-pointer transition-all p-3 -mx-3 rounded-xl hover:bg-gradient-hero group/user"
+        >
+          <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold shadow-elegant text-lg transition-transform group-hover/user:scale-110">
+            {skill.user.split(' ').map(n => n[0]).join('')}
           </div>
-
-          {/* Footer */}
-          <div className="flex items-center justify-between pt-2 border-t border-border/50">
-            <div className="space-y-1">
-              <div 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/profile/${skill.userId}`);
-                }}
-                className="flex items-center space-x-2 text-sm cursor-pointer hover:opacity-80 transition-opacity"
-              >
-                <div className="w-6 h-6 bg-gradient-primary rounded-full flex items-center justify-center text-xs text-white font-medium shadow-md">
-                  {skill.user.split(' ').map(n => n[0]).join('')}
-                </div>
-                <span className="font-medium text-foreground group-hover:text-primary transition-colors">{skill.user}</span>
-                <div className="flex items-center space-x-1">
-                  <Star className="h-3 w-3 text-warning fill-warning" />
-                  <span className="text-xs text-muted-foreground">4.8</span>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                {skill.location && (
-                  <div className="flex items-center space-x-1">
-                    <MapPin className="h-3 w-3" />
-                    <span>{skill.location}</span>
-                  </div>
-                )}
-                <div className="flex items-center space-x-1">
-                  <Clock className="h-3 w-3" />
-                  <span>{timeAgo(skill.createdAt)}</span>
-                </div>
-              </div>
+          <div className="flex-1">
+            <p className="font-semibold text-foreground text-base group-hover/user:gradient-text transition-all">
+              {skill.user}
+            </p>
+            <div className="flex items-center space-x-1">
+              <Star className="h-3.5 w-3.5 text-warning fill-warning" />
+              <span className="text-sm text-muted-foreground font-medium">4.8 rating</span>
             </div>
-            
-            <Button 
-              onClick={async () => {
-                setIsRequesting(true);
-                await onRequestSwap(skill);
-                setTimeout(() => setIsRequesting(false), 2000);
-              }}
-              disabled={isRequesting}
-              className="bg-gradient-primary hover:opacity-90 transition-all duration-300 hover:scale-105 active:scale-95 text-sm px-4 py-2 disabled:opacity-50"
-            >
-              {isRequesting ? (
-                <span className="flex items-center gap-2">
-                  <span className="animate-spin">⏳</span>
-                  Sending...
-                </span>
-              ) : (
-                'Request Swap'
-              )}
-            </Button>
           </div>
+          <ArrowRight className="h-5 w-5 text-primary opacity-0 group-hover/user:opacity-100 group-hover/user:translate-x-1 transition-all" />
+        </div>
+
+        <div className="mt-auto">
+          <Button 
+            onClick={async () => {
+              setIsRequesting(true);
+              await onRequestSwap(skill);
+              setTimeout(() => setIsRequesting(false), 2000);
+            }}
+            disabled={isRequesting}
+            className="w-full btn-gradient h-11 text-base font-semibold hover:scale-105 active:scale-95 disabled:opacity-50 shadow-elegant"
+          >
+            {isRequesting ? (
+              <span className="flex items-center gap-2">
+                <span className="animate-spin">⏳</span>
+                Sending Request...
+              </span>
+            ) : (
+              <>
+                <ArrowRight className="h-4 w-4 mr-2" />
+                Request Skill Swap
+              </>
+            )}
+          </Button>
         </div>
       </CardContent>
     </Card>
   );
 };
 
-const SkillList: React.FC<SkillListProps> = ({ skills: propSkills, loading: propLoading, onRequestSwap }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All Categories');
-  const [sortBy, setSortBy] = useState('recent');
-
-  const skills = propSkills || mockSkills;
-  const loading = propLoading ?? false;
-
-  const filteredSkills = skills.filter(skill => {
-    const matchesSearch = skill.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         skill.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         skill.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesCategory = selectedCategory === 'All Categories' || skill.category === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
-  }).sort((a, b) => {
-    switch (sortBy) {
-      case 'recent':
-        return b.createdAt.getTime() - a.createdAt.getTime();
-      case 'alphabetical':
-        return a.name.localeCompare(b.name);
-      default:
-        return 0;
-    }
-  });
-
-  const handleRequestSwap = (skill: Skill) => {
-    if (onRequestSwap) {
-      onRequestSwap(skill);
-    } else {
-      // Default behavior - could show a modal or redirect
-      console.log('Requesting swap for:', skill.name);
-    }
-  };
-
+const SkillList: React.FC<SkillListProps> = ({ 
+  skills, 
+  loading = false, 
+  onRequestSwap,
+  searchQuery = '',
+  onSearchChange,
+  categories = [],
+  selectedCategory = null,
+  onCategoryClick,
+  onClearFilters
+}) => {
   return (
     <div className="min-h-screen bg-gradient-secondary">
       <Navbar />
       
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
+        <div className="mb-8 text-center space-y-3">
+          <h1 className="gradient-text">
             Discover Skills
           </h1>
-          <p className="text-xl text-muted-foreground">
-            Find the perfect skill match from our community of learners and teachers
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
+            Find talented people offering skills you want to learn and connect for skill swaps
           </p>
         </div>
 
-        {/* Filters */}
-        <Card className="mb-8 shadow-soft border-0 bg-card/80 backdrop-blur">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Search */}
-              <div className="md:col-span-2 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search skills, tags, or descriptions..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+        {/* Search and Filter Section */}
+        <div className="mb-8 space-y-4">
+          {/* Search Bar */}
+          <div className="relative max-w-2xl mx-auto">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search by skill name, description, or user..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange?.(e.target.value)}
+              className="pl-12 pr-12 h-14 text-base glass-card border-border/50 focus:border-primary transition-all"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+                onClick={() => onSearchChange?.('')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
+          {/* Category Filters */}
+          {categories.length > 0 && (
+            <div className="flex flex-wrap gap-2 justify-center items-center">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Filter className="h-4 w-4" />
+                <span className="font-medium">Filter by:</span>
               </div>
-
-              {/* Category Filter */}
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger>
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map(category => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Sort */}
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="recent">Most Recent</SelectItem>
-                  <SelectItem value="alphabetical">Alphabetical</SelectItem>
-                </SelectContent>
-              </Select>
+              {categories.map((category) => (
+                <Badge
+                  key={category}
+                  variant={selectedCategory === category ? "default" : "outline"}
+                  className={`cursor-pointer transition-all hover:scale-105 ${
+                    selectedCategory === category 
+                      ? 'bg-gradient-primary shadow-glow' 
+                      : 'hover:border-primary'
+                  }`}
+                  onClick={() => onCategoryClick?.(category)}
+                >
+                  {category}
+                </Badge>
+              ))}
+              {(searchQuery || selectedCategory) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClearFilters}
+                  className="text-xs"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Clear all
+                </Button>
+              )}
             </div>
-          </CardContent>
-        </Card>
+          )}
 
-        {/* Results */}
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-muted-foreground">
-            {filteredSkills.length} skill{filteredSkills.length !== 1 ? 's' : ''} found
-          </p>
+          {/* Active Filter Display */}
+          {(searchQuery || selectedCategory) && (
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">
+                Showing {skills.length} result{skills.length !== 1 ? 's' : ''}
+                {selectedCategory && ` in ${selectedCategory}`}
+                {searchQuery && ` for "${searchQuery}"`}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Skills Grid */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent mb-4"></div>
-              <p className="text-muted-foreground">Loading skills...</p>
-            </div>
+          <div className="text-center py-20">
+            <div className="inline-block h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent shadow-glow"></div>
+            <p className="mt-6 text-lg text-muted-foreground font-medium">Loading amazing skills...</p>
           </div>
-        ) : filteredSkills.length > 0 ? (
+        ) : skills.length === 0 ? (
+          <Card className="text-center p-12 sm:p-16 glass-card hover-lift max-w-2xl mx-auto">
+            <div className="space-y-6">
+              <div className="w-20 h-20 bg-gradient-primary rounded-full flex items-center justify-center mx-auto shadow-elegant">
+                <Star className="h-10 w-10 text-primary-foreground" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-semibold text-foreground">
+                  {searchQuery || selectedCategory ? 'No matches found' : 'No skills available yet'}
+                </h3>
+                <p className="text-muted-foreground max-w-md mx-auto text-base">
+                  {searchQuery || selectedCategory 
+                    ? 'Try adjusting your filters or search terms'
+                    : 'Be the first to offer your skills and start connecting with others!'}
+                </p>
+              </div>
+              {(searchQuery || selectedCategory) && (
+                <Button onClick={onClearFilters} className="btn-gradient">
+                  Clear Filters
+                </Button>
+              )}
+            </div>
+          </Card>
+        ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredSkills.map((skill, index) => (
+            {skills.map((skill, index) => (
               <div
                 key={skill.id}
-                style={{ animationDelay: `${index * 0.1}s` }}
+                style={{ animationDelay: `${index * 0.05}s` }}
+                className="animate-fade-in"
               >
-                <SkillCard skill={skill} onRequestSwap={handleRequestSwap} />
+                <SkillCard skill={skill} onRequestSwap={onRequestSwap} />
               </div>
             ))}
           </div>
-        ) : (
-          <Card className="text-center p-12 shadow-soft border-0 bg-card/80 backdrop-blur">
-            <div className="space-y-4">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
-                <Search className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-medium text-foreground">No skills found</h3>
-              <p className="text-muted-foreground">
-                Try adjusting your search terms or filters to find more skills.
-              </p>
-              <Button 
-                onClick={() => {
-                  setSearchTerm('');
-                  setSelectedCategory('All Categories');
-                }}
-                variant="outline"
-              >
-                Clear Filters
-              </Button>
-            </div>
-          </Card>
         )}
       </div>
     </div>

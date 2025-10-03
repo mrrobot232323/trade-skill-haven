@@ -11,7 +11,10 @@ const Skills: React.FC = () => {
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
+  const [filteredSkills, setFilteredSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const { success, error } = useToast();
   const { user } = useAuth();
 
@@ -59,6 +62,7 @@ const Skills: React.FC = () => {
       }));
 
       setSkills(transformedSkills);
+      setFilteredSkills(transformedSkills);
     } catch (err) {
       console.error('Error fetching skills:', err);
       error('Error', 'Failed to load skills.');
@@ -66,6 +70,36 @@ const Skills: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Filter skills when search or category changes
+  useEffect(() => {
+    let filtered = skills;
+
+    if (searchQuery) {
+      filtered = filtered.filter(skill => 
+        skill.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        skill.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        skill.user.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    if (selectedCategory) {
+      filtered = filtered.filter(skill => skill.category === selectedCategory);
+    }
+
+    setFilteredSkills(filtered);
+  }, [searchQuery, selectedCategory, skills]);
+
+  const handleCategoryClick = (category: string) => {
+    setSelectedCategory(selectedCategory === category ? null : category);
+  };
+
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory(null);
+  };
+
+  const categories = Array.from(new Set(skills.map(skill => skill.category)));
 
   const handleRequestSwap = async (skill: Skill) => {
     if (!user) {
@@ -126,7 +160,17 @@ const Skills: React.FC = () => {
 
   return (
     <>
-      <SkillList skills={skills} loading={loading} onRequestSwap={handleRequestSwap} />
+      <SkillList 
+        skills={filteredSkills} 
+        loading={loading} 
+        onRequestSwap={handleRequestSwap}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onCategoryClick={handleCategoryClick}
+        onClearFilters={handleClearFilters}
+      />
       <ChatBox
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}

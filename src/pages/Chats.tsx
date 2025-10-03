@@ -235,65 +235,71 @@ const Chats: React.FC = () => {
     <div className="min-h-screen bg-gradient-secondary">
       <Navbar />
       
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="mb-8 text-center space-y-3">
+          <h1 className="gradient-text">
             Messages
           </h1>
-          <p className="text-xl text-muted-foreground">
-            Chat with your skill swap partners
+          <p className="text-lg sm:text-xl text-muted-foreground">
+            Chat with your skill swap partners and coordinate learning sessions
           </p>
         </div>
 
         {conversations.length === 0 ? (
-          <Card className="text-center p-12 shadow-soft border-0 bg-card/80 backdrop-blur">
-            <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">No conversations yet</h3>
-            <p className="text-muted-foreground">
-              Accept swap requests to start chatting with other users
-            </p>
+          <Card className="text-center p-12 sm:p-16 glass-card hover-lift max-w-2xl mx-auto">
+            <div className="space-y-6">
+              <div className="w-20 h-20 bg-gradient-primary rounded-full flex items-center justify-center mx-auto shadow-elegant">
+                <MessageCircle className="h-10 w-10 text-primary-foreground" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-semibold text-foreground">No conversations yet</h3>
+                <p className="text-muted-foreground max-w-md mx-auto text-base">
+                  Accept swap requests to start chatting and learning together
+                </p>
+              </div>
+            </div>
           </Card>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Conversations List */}
             <div className="lg:col-span-1 space-y-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search conversations..."
-                  className="pl-10"
+                  className="pl-12 h-12 glass-card border-border/50 focus:border-primary transition-all"
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {filteredConversations.map((conversation) => (
                   <Card
                     key={conversation.id}
-                    className={`cursor-pointer transition-all duration-300 hover:shadow-elegant hover:scale-[1.02] border-0 overflow-hidden ${
+                    className={`cursor-pointer transition-all duration-300 hover-lift border-0 overflow-hidden ${
                       selectedConversation?.id === conversation.id
-                        ? 'bg-gradient-to-br from-primary/20 to-primary/10 border-l-4 border-l-primary shadow-md'
-                        : 'bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-xl'
+                        ? 'bg-gradient-to-br from-primary/10 to-accent/5 shadow-elegant border-l-4 border-l-primary'
+                        : 'glass-card'
                     }`}
                     onClick={() => handleConversationClick(conversation)}
                   >
-                    <div className={`absolute inset-0 bg-gradient-primary opacity-0 transition-opacity duration-300 ${selectedConversation?.id === conversation.id ? 'opacity-5' : 'hover:opacity-5'}`}></div>
+                    <div className={`absolute inset-0 bg-gradient-hero opacity-0 transition-opacity duration-300 ${selectedConversation?.id === conversation.id ? 'opacity-100' : 'hover:opacity-100'}`}></div>
                     <CardContent className="p-4 relative z-10">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
+                          <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold text-base shadow-elegant">
                             {conversation.otherUser.name.split(' ').map(n => n[0]).join('')}
                           </div>
                           <div>
-                            <h4 className="font-semibold text-foreground">
+                            <h4 className="font-semibold text-foreground text-base">
                               {conversation.otherUser.name}
                             </h4>
-                            <p className="text-xs text-muted-foreground">{conversation.skill}</p>
+                            <p className="text-xs text-muted-foreground font-medium">{conversation.skill}</p>
                           </div>
                         </div>
                         {conversation.unreadCount > 0 && (
-                          <Badge className="bg-accent text-white">
+                          <Badge className="bg-gradient-primary text-primary-foreground shadow-soft">
                             {conversation.unreadCount}
                           </Badge>
                         )}

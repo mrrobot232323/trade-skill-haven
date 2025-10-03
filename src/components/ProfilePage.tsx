@@ -130,7 +130,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
     <div className="min-h-screen bg-gradient-secondary">
       <Navbar />
       
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Profile Header */}
         <Card className="shadow-elegant border-0 bg-card/80 backdrop-blur">
           <CardContent className="p-8">
