@@ -164,8 +164,8 @@ const DashboardPage: React.FC = () => {
       if (swapError) throw swapError;
 
       success(
-        'Swap accepted!',
-        `You can now chat with ${swap.user}. Redirecting to chats...`
+        '🎉 Request accepted!',
+        "You're now connected for a skill swap."
       );
       
       await fetchSwaps(); // Refresh swaps
@@ -332,6 +332,7 @@ const DashboardPage: React.FC = () => {
         recipientName={selectedSwap?.user || 'User'}
         messages={messages}
         onSendMessage={handleSendMessage}
+        isNewConnection={selectedSwap?.status === 'active' && messages.length === 0}
       />
     </>
   );

@@ -12,6 +12,7 @@ interface ChatBoxProps {
   recipientName: string;
   messages: Message[];
   onSendMessage: (message: string) => void;
+  isNewConnection?: boolean;
 }
 
 const ChatBox: React.FC<ChatBoxProps> = ({
@@ -19,7 +20,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   onClose,
   recipientName,
   messages,
-  onSendMessage
+  onSendMessage,
+  isNewConnection = false
 }) => {
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -126,6 +128,20 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         {/* Messages */}
         <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* System message for new connections */}
+            {isNewConnection && messages.length === 0 && (
+              <div className="flex justify-center my-6">
+                <div className="max-w-[85%] bg-gradient-to-br from-primary/10 to-accent/10 backdrop-blur border border-primary/20 rounded-2xl px-5 py-4 text-center shadow-sm">
+                  <p className="text-sm text-foreground font-medium">
+                    💬 You and <span className="font-semibold text-primary">{recipientName}</span> are now connected!
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Start your skill swap conversation here.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {Object.entries(groupedMessages).map(([date, dateMessages]) => (
               <div key={date}>
                 {/* Date separator */}

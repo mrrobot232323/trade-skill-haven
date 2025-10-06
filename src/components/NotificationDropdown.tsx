@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { toast } from '@/hooks/use-toast';
 
 interface Notification {
   id: string;
@@ -100,8 +101,9 @@ const NotificationDropdown: React.FC = () => {
   const subscribeToNotifications = () => {
     if (!user) return;
 
-    const channel = supabase
-      .channel('notifications')
+    // Subscribe to new requests
+    const requestChannel = supabase
+      .channel('new-requests')
       .on(
         'postgres_changes',
         {
@@ -111,13 +113,37 @@ const NotificationDropdown: React.FC = () => {
           filter: `receiver_id=eq.${user.id}`
         },
         () => {
+          toast({
+            title: "📬 New Request!",
+            description: "You've received a new skill swap request! Check your matches to respond.",
+          });
           fetchNotifications();
         }
       )
       .subscribe();
 
+    // Subscribe to accepted requests
+    const acceptChannel = supabase
+      .channel('accepted-requests')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'skill_swap_requests',
+          filter: `requester_id=eq.${user.id}`
+        },
+        (payload: any) => {
+          if (payload.new.status === 'accepted') {
+            fetchNotifications();
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(requestChannel);
+      supabase.removeChannel(acceptChannel);
     };
   };
 

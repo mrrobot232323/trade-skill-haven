@@ -20,6 +20,7 @@ interface Conversation {
   skill: string;
   lastMessage?: Message;
   unreadCount: number;
+  status: string;
 }
 
 const Chats: React.FC = () => {
@@ -72,6 +73,7 @@ const Chats: React.FC = () => {
         .from('swaps')
         .select(`
           id,
+          status,
           request_id,
           skill_swap_requests!inner(
             requester_id,
@@ -131,7 +133,8 @@ const Chats: React.FC = () => {
             },
             skill: req.requested_skill.name,
             lastMessage,
-            unreadCount: count || 0
+            unreadCount: count || 0,
+            status: swap.status
           };
         })
       );
@@ -414,6 +417,7 @@ const Chats: React.FC = () => {
           recipientName={selectedConversation.otherUser.name}
           messages={messages}
           onSendMessage={handleSendMessage}
+          isNewConnection={selectedConversation.status === 'active' && messages.length === 0}
         />
       )}
     </div>
