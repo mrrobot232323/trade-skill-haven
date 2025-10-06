@@ -137,7 +137,7 @@ const Skills: React.FC = () => {
 
       setSelectedSkill(skill);
       success(
-        '✨ Success!',
+        '🎉 Success!',
         'Your skill swap request has been sent successfully!'
       );
     } catch (err) {

@@ -54,40 +54,43 @@ const Toast: React.FC<ToastProps> = ({
   const getBackgroundClass = () => {
     switch (type) {
       case 'success':
-        return 'border-success/20 bg-success/5';
+        return 'border-success/30 bg-gradient-to-r from-success/10 to-success/5 backdrop-blur-sm';
       case 'error':
-        return 'border-destructive/20 bg-destructive/5';
+        return 'border-destructive/30 bg-gradient-to-r from-destructive/10 to-destructive/5 backdrop-blur-sm';
       case 'warning':
-        return 'border-warning/20 bg-warning/5';
+        return 'border-warning/30 bg-gradient-to-r from-warning/10 to-warning/5 backdrop-blur-sm';
       case 'info':
-        return 'border-primary/20 bg-primary/5';
+        return 'border-primary/30 bg-gradient-to-r from-primary/10 to-primary/5 backdrop-blur-sm';
     }
   };
 
   return (
     <div
       className={`
-        transform transition-all duration-300 ease-out
+        transform transition-all duration-500 ease-out
         ${isVisible 
           ? 'translate-x-0 opacity-100 scale-100' 
-          : 'translate-x-full opacity-0 scale-95'
+          : 'translate-x-full opacity-0 scale-90'
         }
       `}
     >
       <div className={`
-        max-w-sm w-full bg-card border rounded-lg shadow-elegant p-4
+        max-w-md w-full bg-card border-2 rounded-xl shadow-2xl p-5
         ${getBackgroundClass()}
+        ${type === 'success' ? 'animate-bounce-once' : ''}
       `}>
-        <div className="flex items-start space-x-3">
-          <div className="flex-shrink-0">
-            {getIcon()}
+        <div className="flex items-start space-x-4">
+          <div className="flex-shrink-0 mt-0.5">
+            <div className={`${type === 'success' ? 'animate-scale-in' : ''}`}>
+              {getIcon()}
+            </div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground">
+            <p className="text-base font-bold text-foreground">
               {title}
             </p>
             {description && (
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
                 {description}
               </p>
             )}
@@ -96,7 +99,7 @@ const Toast: React.FC<ToastProps> = ({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 p-0 hover:bg-muted/50"
+              className="h-7 w-7 p-0 hover:bg-muted/50 rounded-full"
               onClick={handleRemove}
             >
               <X className="h-4 w-4" />
@@ -116,10 +119,12 @@ interface ToastContainerProps {
 
 export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => {
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
-      {toasts.map((toast) => (
-        <Toast key={toast.id} {...toast} onRemove={onRemove} />
-      ))}
+    <div className="fixed top-6 right-6 z-[100] space-y-3 pointer-events-none">
+      <div className="pointer-events-auto">
+        {toasts.map((toast) => (
+          <Toast key={toast.id} {...toast} onRemove={onRemove} />
+        ))}
+      </div>
     </div>
   );
 };
