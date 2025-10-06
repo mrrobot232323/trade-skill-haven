@@ -67,10 +67,10 @@ const Toast: React.FC<ToastProps> = ({
   return (
     <div
       className={`
-        transform transition-all duration-500 ease-out
+        transform transition-all duration-700 ease-out
         ${isVisible 
-          ? 'translate-x-0 opacity-100 scale-100' 
-          : 'translate-x-full opacity-0 scale-90'
+          ? 'translate-x-0 translate-y-0 opacity-100 scale-100 rotate-0' 
+          : 'translate-x-full translate-y-4 opacity-0 scale-95 rotate-6'
         }
       `}
     >
@@ -78,6 +78,7 @@ const Toast: React.FC<ToastProps> = ({
         max-w-md w-full bg-card border-2 rounded-xl shadow-2xl p-5
         ${getBackgroundClass()}
         ${type === 'success' ? 'animate-bounce-once' : ''}
+        transition-all duration-300 hover:scale-105 hover:shadow-elegant
       `}>
         <div className="flex items-start space-x-4">
           <div className="flex-shrink-0 mt-0.5">
