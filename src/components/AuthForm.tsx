@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AuthData } from '@/types';
+import { authSchema } from '@/utils/validation';
+import { z } from 'zod';
 
 interface AuthFormProps {
   onSubmit: (data: AuthData) => Promise<void>;
@@ -28,32 +30,21 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit }) => {
   const validateForm = (): boolean => {
     const newErrors: Partial<AuthData> = {};
 
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-
-    if (!isLogin) {
-      if (!formData.name || formData.name.trim().length < 2) {
-        newErrors.name = 'Name must be at least 2 characters';
+    try {
+      // Use zod schema validation
+      authSchema.parse(formData);
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        error.errors.forEach((err) => {
+          const field = err.path[0] as keyof AuthData;
+          newErrors[field] = err.message;
+        });
       }
-      
-      if (!formData.confirmPassword) {
-        newErrors.confirmPassword = 'Please confirm your password';
-      } else if (formData.password !== formData.confirmPassword) {
-        newErrors.confirmPassword = 'Passwords do not match';
-      }
+      setErrors(newErrors);
+      return false;
     }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

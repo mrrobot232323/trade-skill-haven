@@ -5,6 +5,7 @@ import { useToast } from '@/components/Toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import Loader from '@/components/Loader';
+import { profileSchema } from '@/utils/validation';
 
 const Profile: React.FC = () => {
   const { success, error } = useToast();
@@ -76,13 +77,20 @@ const Profile: React.FC = () => {
 
   const handleUpdateProfile = async (updatedProfile: UserProfile) => {
     try {
+      // Validate profile data with zod schema
+      const validatedData = profileSchema.parse({
+        name: updatedProfile.name,
+        bio: updatedProfile.bio,
+        profilePicture: updatedProfile.profilePicture
+      });
+
       // Only update allowed fields, never update email through profile updates
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          name: updatedProfile.name,
-          bio: updatedProfile.bio,
-          profile_pic: updatedProfile.profilePicture
+          name: validatedData.name,
+          bio: validatedData.bio,
+          profile_pic: validatedData.profilePicture
         })
         .eq('id', user?.id);
 
@@ -90,19 +98,30 @@ const Profile: React.FC = () => {
 
       success('Profile updated!', 'Your profile has been successfully updated.');
       await fetchProfile(); // Refresh profile data
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating profile:', err);
-      error('Error', 'Failed to update profile.');
+      if (err.errors && err.errors.length > 0) {
+        error('Validation Error', err.errors[0].message);
+      } else {
+        error('Error', 'Failed to update profile.');
+      }
     }
   };
 
   const handleAddSkill = async (skillName: string, type: 'offer' | 'want') => {
     try {
+      // Validate skill name (basic validation since we don't have full skill data here)
+      const trimmedSkillName = skillName.trim();
+      if (trimmedSkillName.length < 2 || trimmedSkillName.length > 100) {
+        error('Validation Error', 'Skill name must be between 2 and 100 characters');
+        return;
+      }
+
       // First, check if skill exists
       let { data: existingSkill, error: skillError } = await supabase
         .from('skills')
         .select('id')
-        .eq('name', skillName)
+        .eq('name', trimmedSkillName)
         .maybeSingle();
 
       if (skillError) throw skillError;
@@ -114,9 +133,9 @@ const Profile: React.FC = () => {
         const { data: newSkill, error: createError } = await supabase
           .from('skills')
           .insert({
-            name: skillName,
+            name: trimmedSkillName,
             category: 'Other',
-            description: `Learn ${skillName}`
+            description: `Learn ${trimmedSkillName}`
           })
           .select()
           .single();
@@ -138,9 +157,9 @@ const Profile: React.FC = () => {
 
       if (insertError) throw insertError;
 
-      success('Skill added!', `${skillName} has been added to your profile.`);
+      success('Skill added!', `${trimmedSkillName} has been added to your profile.`);
       await fetchProfile(); // Refresh profile data
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error adding skill:', err);
       error('Error', 'Failed to add skill.');
     }

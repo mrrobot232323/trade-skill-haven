@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Message } from '@/types';
+import { messageSchema } from '@/utils/validation';
+import { useToast } from '@/components/Toast';
 
 interface ChatBoxProps {
   isOpen: boolean;
@@ -27,6 +29,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { error } = useToast();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -43,14 +46,21 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   }, [isOpen]);
 
   const handleSend = () => {
-    if (!newMessage.trim()) return;
-    
-    onSendMessage(newMessage.trim());
-    setNewMessage('');
-    
-    // Simulate typing indicator
-    setIsTyping(true);
-    setTimeout(() => setIsTyping(false), 2000);
+    try {
+      // Validate message with zod schema
+      const validatedData = messageSchema.parse({ text: newMessage });
+      
+      onSendMessage(validatedData.text);
+      setNewMessage('');
+      
+      // Simulate typing indicator
+      setIsTyping(true);
+      setTimeout(() => setIsTyping(false), 2000);
+    } catch (err: any) {
+      if (err.errors && err.errors.length > 0) {
+        error('Invalid Message', err.errors[0].message);
+      }
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
