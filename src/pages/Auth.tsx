@@ -11,8 +11,9 @@ const Auth: React.FC = () => {
   const { signUp, signIn, user } = useAuth();
 
   useEffect(() => {
+    // Redirect to dashboard if already logged in
     if (user) {
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     }
   }, [user, navigate]);
 
@@ -24,19 +25,34 @@ const Auth: React.FC = () => {
         // Sign up
         result = await signUp(data.email, data.password, data.name);
         if (!result.error) {
-          success('Account created!', 'Welcome to SkillSwap! You can now log in.');
+          success('Account created!', 'Welcome to SkillSwap! Redirecting to dashboard...');
+          // Small delay to show success message before redirect
+          setTimeout(() => {
+            navigate('/dashboard', { replace: true });
+          }, 1000);
         }
       } else {
         // Sign in
         result = await signIn(data.email, data.password);
         if (!result.error) {
           success('Welcome back!', 'You have been successfully logged in.');
-          navigate('/dashboard');
+          // Immediate redirect on login
+          navigate('/dashboard', { replace: true });
         }
       }
 
       if (result.error) {
-        error('Authentication failed', result.error.message);
+        // Handle specific error messages
+        const errorMessage = result.error.message;
+        if (errorMessage.includes('Invalid login credentials')) {
+          error('Login failed', 'Invalid email or password. Please try again.');
+        } else if (errorMessage.includes('User already registered')) {
+          error('Signup failed', 'An account with this email already exists. Please login instead.');
+        } else if (errorMessage.includes('Email not confirmed')) {
+          error('Email not confirmed', 'Please check your email to confirm your account.');
+        } else {
+          error('Authentication failed', errorMessage);
+        }
         throw result.error;
       }
     } catch (err) {

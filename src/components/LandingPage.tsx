@@ -49,22 +49,22 @@ const LandingPage: React.FC = () => {
               Join the world's largest skill-sharing community. Trade your expertise for new knowledge and build meaningful connections.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link to="/skills">
+              <Link to="/auth">
                 <Button 
                   size="lg" 
                   className="bg-gradient-primary hover:opacity-90 transition-all duration-300 text-lg px-8 py-6 shadow-elegant group"
                 >
-                  Find Skills
+                  Get Started Free
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Link to="/profile">
+              <Link to="/skills">
                 <Button 
                   variant="outline" 
                   size="lg" 
                   className="text-lg px-8 py-6 border-2 hover:bg-muted/50 transition-all duration-300"
                 >
-                  Offer Skills
+                  Browse Skills
                 </Button>
               </Link>
             </div>

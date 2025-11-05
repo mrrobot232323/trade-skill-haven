@@ -71,8 +71,9 @@ const Navbar: React.FC = () => {
                   onClick={async () => {
                     await signOut();
                     success('Logged out', 'You have been successfully logged out.');
-                    navigate('/');
+                    navigate('/', { replace: true });
                   }}
+                  title="Logout"
                 >
                   <LogOut className="h-5 w-5" />
                 </Button>
@@ -124,7 +125,7 @@ const Navbar: React.FC = () => {
                     onClick={async () => {
                       await signOut();
                       success('Logged out', 'You have been successfully logged out.');
-                      navigate('/');
+                      navigate('/', { replace: true });
                       setIsOpen(false);
                     }}
                   >
