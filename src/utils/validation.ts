@@ -1,13 +1,29 @@
 import { z } from 'zod';
 
-// Authentication validation
-export const authSchema = z.object({
+// Authentication validation - separate schemas for login and signup
+export const loginSchema = z.object({
+  email: z.string().trim().email({ message: "Invalid email address" }).max(255, { message: "Email must be less than 255 characters" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }).max(128, { message: "Password must be less than 128 characters" })
+});
+
+export const signupSchema = z.object({
   email: z.string().trim().email({ message: "Invalid email address" }).max(255, { message: "Email must be less than 255 characters" }),
   password: z.string().min(8, { message: "Password must be at least 8 characters" }).max(128, { message: "Password must be less than 128 characters" }),
-  name: z.string().trim().min(2, { message: "Name must be at least 2 characters" }).max(100, { message: "Name must be less than 100 characters" }).optional(),
+  name: z.string().trim().min(2, { message: "Name must be at least 2 characters" }).max(100, { message: "Name must be less than 100 characters" }),
+  confirmPassword: z.string()
+}).refine((data) => data.confirmPassword === data.password, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"]
+});
+
+// Legacy schema for backward compatibility
+export const authSchema = z.object({
+  email: z.string().trim().email({ message: "Invalid email address" }).max(255, { message: "Email must be less than 255 characters" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }).max(128, { message: "Password must be less than 128 characters" }),
+  name: z.string().trim().min(2, { message: "Name must be at least 2 characters" }).max(100, { message: "Name must be less than 100 characters" }).optional().or(z.literal('')),
   confirmPassword: z.string().optional()
 }).refine((data) => {
-  if (data.confirmPassword !== undefined && data.confirmPassword !== data.password) {
+  if (data.confirmPassword && data.confirmPassword !== data.password) {
     return false;
   }
   return true;

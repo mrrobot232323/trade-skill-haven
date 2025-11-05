@@ -18,30 +18,33 @@ const Auth: React.FC = () => {
   }, [user, navigate]);
 
   const handleSubmit = async (data: AuthData) => {
+    console.log('Auth submit - data received:', { email: data.email, hasPassword: !!data.password, hasName: !!data.name });
+    
     try {
       let result;
       
-      if (data.name) {
+      if (data.name && data.name.trim().length > 0) {
         // Sign up
+        console.log('Attempting signup...');
         result = await signUp(data.email, data.password, data.name);
         if (!result.error) {
           success('Account created!', 'Welcome to SkillSwap! Redirecting to dashboard...');
-          // Small delay to show success message before redirect
           setTimeout(() => {
             navigate('/dashboard', { replace: true });
           }, 1000);
         }
       } else {
         // Sign in
+        console.log('Attempting signin...');
         result = await signIn(data.email, data.password);
         if (!result.error) {
           success('Welcome back!', 'You have been successfully logged in.');
-          // Immediate redirect on login
           navigate('/dashboard', { replace: true });
         }
       }
 
       if (result.error) {
+        console.error('Auth error from Supabase:', result.error);
         // Handle specific error messages
         const errorMessage = result.error.message;
         if (errorMessage.includes('Invalid login credentials')) {

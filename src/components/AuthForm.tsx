@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AuthData } from '@/types';
-import { authSchema } from '@/utils/validation';
+import { loginSchema, signupSchema } from '@/utils/validation';
 import { z } from 'zod';
 import { useToast } from '@/components/Toast';
 
@@ -37,8 +37,17 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, onGoogleSignIn, onPasswor
     const newErrors: Partial<AuthData> = {};
 
     try {
-      // Use zod schema validation
-      authSchema.parse(formData);
+      // Use different schema based on login/signup mode
+      if (isLogin) {
+        // For login, only validate email and password
+        loginSchema.parse({
+          email: formData.email,
+          password: formData.password
+        });
+      } else {
+        // For signup, validate all fields
+        signupSchema.parse(formData);
+      }
       setErrors({});
       return true;
     } catch (error) {
