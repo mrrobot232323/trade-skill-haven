@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const Auth: React.FC = () => {
   const navigate = useNavigate();
   const { success, error } = useToast();
-  const { signUp, signIn, user } = useAuth();
+  const { signUp, signIn, signInWithGoogle, resetPassword, user } = useAuth();
 
   useEffect(() => {
     // Redirect to dashboard if already logged in
@@ -60,7 +60,31 @@ const Auth: React.FC = () => {
     }
   };
 
-  return <AuthForm onSubmit={handleSubmit} />;
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await signInWithGoogle();
+      if (result.error) {
+        error('Google Sign-In failed', result.error.message);
+        throw result.error;
+      }
+    } catch (err) {
+      console.error('Google auth error:', err);
+    }
+  };
+
+  const handlePasswordReset = async (email: string) => {
+    try {
+      const result = await resetPassword(email);
+      if (result.error) {
+        error('Password reset failed', result.error.message);
+        throw result.error;
+      }
+    } catch (err) {
+      console.error('Password reset error:', err);
+    }
+  };
+
+  return <AuthForm onSubmit={handleSubmit} onGoogleSignIn={handleGoogleSignIn} onPasswordReset={handlePasswordReset} />;
 };
 
 export default Auth;
