@@ -107,29 +107,51 @@ const Skills: React.FC = () => {
       return;
     }
 
+    // Check if requesting own skill
+    if (skill.userId === user.id) {
+      error('Error', 'You cannot request a swap for your own skill.');
+      return;
+    }
+
     try {
       // Get user's skills to offer
       const { data: userSkills, error: skillsError } = await supabase
         .from('user_skills')
         .select('skill_id')
         .eq('user_id', user.id)
-        .eq('type', 'offer')
-        .limit(1)
-        .maybeSingle();
+        .eq('type', 'offer');
 
-      if (skillsError || !userSkills) {
-        error('Error', 'Please add skills you can offer in your profile first.');
+      if (skillsError) throw skillsError;
+
+      if (!userSkills || userSkills.length === 0) {
+        error('No Skills Found', 'Please add skills you can offer in your profile first before requesting a swap.');
         return;
       }
 
-      // Create a swap request
+      // Check if swap request already exists
+      const { data: existingRequest, error: checkError } = await supabase
+        .from('skill_swap_requests')
+        .select('id')
+        .eq('requester_id', user.id)
+        .eq('receiver_id', skill.userId)
+        .eq('requested_skill_id', skill.id)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (existingRequest) {
+        error('Already Requested', 'You have already sent a swap request for this skill.');
+        return;
+      }
+
+      // Create a swap request with the first skill they offer
       const { error: requestError } = await supabase
         .from('skill_swap_requests')
         .insert({
           requester_id: user.id,
           receiver_id: skill.userId,
           requested_skill_id: skill.id,
-          offered_skill_id: userSkills.skill_id,
+          offered_skill_id: userSkills[0].skill_id,
           status: 'pending'
         });
 
@@ -140,9 +162,13 @@ const Skills: React.FC = () => {
         '🎉 Success!',
         'Your skill swap request has been sent successfully!'
       );
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error requesting swap:', err);
-      error('Error', 'Failed to send swap request.');
+      if (err.code === '23505') {
+        error('Duplicate Request', 'You have already sent a swap request for this skill.');
+      } else {
+        error('Error', 'Failed to send swap request. Please try again.');
+      }
     }
   };
 

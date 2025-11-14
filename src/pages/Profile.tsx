@@ -80,8 +80,9 @@ const Profile: React.FC = () => {
       // Validate profile data with zod schema
       const validatedData = profileSchema.parse({
         name: updatedProfile.name,
-        bio: updatedProfile.bio,
-        profilePicture: updatedProfile.profilePicture
+        bio: updatedProfile.bio || '',
+        location: (updatedProfile as any).location || '',
+        profilePicture: updatedProfile.profilePicture || ''
       });
 
       // Only update allowed fields, never update email through profile updates
@@ -89,39 +90,40 @@ const Profile: React.FC = () => {
         .from('profiles')
         .update({
           name: validatedData.name,
-          bio: validatedData.bio,
-          profile_pic: validatedData.profilePicture
+          bio: validatedData.bio || null,
+          location: validatedData.location || null,
+          profile_pic: validatedData.profilePicture || null
         })
         .eq('id', user?.id);
 
       if (updateError) throw updateError;
 
-      success('Profile updated!', 'Your profile has been successfully updated.');
+      success('Profile Updated!', 'Your profile has been successfully updated.');
       await fetchProfile(); // Refresh profile data
     } catch (err: any) {
       console.error('Error updating profile:', err);
       if (err.errors && err.errors.length > 0) {
         error('Validation Error', err.errors[0].message);
       } else {
-        error('Error', 'Failed to update profile.');
+        error('Error', 'Failed to update profile. Please try again.');
       }
     }
   };
 
   const handleAddSkill = async (skillName: string, type: 'offer' | 'want') => {
     try {
-      // Validate skill name (basic validation since we don't have full skill data here)
+      // Validate skill name
       const trimmedSkillName = skillName.trim();
       if (trimmedSkillName.length < 2 || trimmedSkillName.length > 100) {
         error('Validation Error', 'Skill name must be between 2 and 100 characters');
         return;
       }
 
-      // First, check if skill exists
-      let { data: existingSkill, error: skillError } = await supabase
+      // Check if user already has this skill
+      const { data: existingSkill, error: skillError } = await supabase
         .from('skills')
         .select('id')
-        .eq('name', trimmedSkillName)
+        .ilike('name', trimmedSkillName)
         .maybeSingle();
 
       if (skillError) throw skillError;
@@ -134,7 +136,7 @@ const Profile: React.FC = () => {
           .from('skills')
           .insert({
             name: trimmedSkillName,
-            category: 'Other',
+            category: 'General',
             description: `Learn ${trimmedSkillName}`
           })
           .select()
@@ -144,6 +146,22 @@ const Profile: React.FC = () => {
         skillId = newSkill.id;
       } else {
         skillId = existingSkill.id;
+
+        // Check if user already has this skill with the same type
+        const { data: userHasSkill, error: checkError } = await supabase
+          .from('user_skills')
+          .select('id')
+          .eq('user_id', user?.id)
+          .eq('skill_id', skillId)
+          .eq('type', type)
+          .maybeSingle();
+
+        if (checkError) throw checkError;
+
+        if (userHasSkill) {
+          error('Skill Already Added', `You already have "${trimmedSkillName}" in your ${type === 'offer' ? 'offered' : 'wanted'} skills.`);
+          return;
+        }
       }
 
       // Add skill to user_skills
@@ -155,13 +173,19 @@ const Profile: React.FC = () => {
           type: type
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        if (insertError.code === '23505') {
+          error('Skill Already Added', `You already have "${trimmedSkillName}" in your profile.`);
+          return;
+        }
+        throw insertError;
+      }
 
-      success('Skill added!', `${trimmedSkillName} has been added to your profile.`);
+      success('Skill Added!', `${trimmedSkillName} has been added to your ${type === 'offer' ? 'offered' : 'wanted'} skills.`);
       await fetchProfile(); // Refresh profile data
     } catch (err: any) {
       console.error('Error adding skill:', err);
-      error('Error', 'Failed to add skill.');
+      error('Error', 'Failed to add skill. Please try again.');
     }
   };
 

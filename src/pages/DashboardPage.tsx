@@ -149,6 +149,16 @@ const DashboardPage: React.FC = () => {
 
   const handleAcceptSwap = async (swap: Swap) => {
     try {
+      // Check if swap already exists to avoid duplicate creation
+      const { data: existingSwap, error: checkError } = await supabase
+        .from('swaps')
+        .select('id')
+        .eq('request_id', swap.id)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      // Update request status
       const { error: updateError } = await supabase
         .from('skill_swap_requests')
         .update({ status: 'accepted' })
@@ -156,15 +166,23 @@ const DashboardPage: React.FC = () => {
 
       if (updateError) throw updateError;
 
-      // Create a swap entry
-      const { error: swapError } = await supabase
-        .from('swaps')
-        .insert({ request_id: swap.id, status: 'active' });
+      // Create a swap entry only if it doesn't exist
+      if (!existingSwap) {
+        const { error: swapError } = await supabase
+          .from('swaps')
+          .insert({ request_id: swap.id, status: 'active' });
 
-      if (swapError) throw swapError;
+        if (swapError) {
+          if (swapError.code === '23505') {
+            console.log('Swap already exists, skipping creation');
+          } else {
+            throw swapError;
+          }
+        }
+      }
 
       success(
-        '🎉 Request accepted!',
+        '🎉 Request Accepted!',
         "You're now connected for a skill swap."
       );
       
@@ -174,9 +192,9 @@ const DashboardPage: React.FC = () => {
       setTimeout(() => {
         window.location.href = '/chats';
       }, 1500);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error accepting swap:', err);
-      error('Error', 'Failed to accept swap.');
+      error('Error', 'Failed to accept swap. Please try again.');
     }
   };
 
@@ -190,13 +208,13 @@ const DashboardPage: React.FC = () => {
       if (updateError) throw updateError;
 
       success(
-        'Swap declined',
+        'Swap Declined',
         `The ${swap.skill} swap request has been declined.`
       );
       await fetchSwaps(); // Refresh swaps
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error rejecting swap:', err);
-      error('Error', 'Failed to decline swap.');
+      error('Error', 'Failed to decline swap. Please try again.');
     }
   };
 
@@ -213,17 +231,26 @@ const DashboardPage: React.FC = () => {
 
   const handleSubmitReview = async (review: Omit<Review, 'id' | 'createdAt'>) => {
     try {
-      if (!selectedSwap) return;
+      if (!selectedSwap) {
+        error('Error', 'No swap selected. Please try again.');
+        return;
+      }
 
       // Find the swap entry
       const { data: swapData, error: swapError } = await supabase
         .from('swaps')
         .select('id')
         .eq('request_id', selectedSwap.id)
-        .single();
+        .maybeSingle();
 
       if (swapError) throw swapError;
 
+      if (!swapData) {
+        error('Error', 'Swap not found. Please try again.');
+        return;
+      }
+
+      // Insert review
       const { error: reviewError } = await supabase
         .from('reviews')
         .insert({
@@ -244,16 +271,49 @@ const DashboardPage: React.FC = () => {
 
       if (updateError) throw updateError;
 
+      // Update completed swaps count for both users
+      try {
+        // Fetch current counts
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('completed_swaps')
+          .eq('id', user?.id)
+          .single();
+
+        const { data: otherProfile } = await supabase
+          .from('profiles')
+          .select('completed_swaps')
+          .eq('id', selectedSwap.userId)
+          .single();
+
+        // Update with incremented values
+        if (userProfile) {
+          await supabase
+            .from('profiles')
+            .update({ completed_swaps: (userProfile.completed_swaps || 0) + 1 })
+            .eq('id', user?.id);
+        }
+
+        if (otherProfile) {
+          await supabase
+            .from('profiles')
+            .update({ completed_swaps: (otherProfile.completed_swaps || 0) + 1 })
+            .eq('id', selectedSwap.userId);
+        }
+      } catch (countErr) {
+        console.error('Error updating completed swaps count:', countErr);
+      }
+
       success(
-        'Review submitted!',
+        '✅ Review Submitted!',
         'Thank you for your feedback. It helps our community grow!'
       );
       setIsRatingModalOpen(false);
       setSelectedSwap(null);
       await fetchSwaps(); // Refresh swaps
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error submitting review:', err);
-      error('Error', 'Failed to submit review.');
+      error('Error', 'Failed to submit review. Please try again.');
     }
   };
 

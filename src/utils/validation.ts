@@ -40,8 +40,8 @@ export const messageSchema = z.object({
 // Profile update validation
 export const profileSchema = z.object({
   name: z.string().trim().min(2, { message: "Name must be at least 2 characters" }).max(100, { message: "Name must be less than 100 characters" }),
-  bio: z.string().max(500, { message: "Bio must be less than 500 characters" }).optional(),
-  location: z.string().max(100, { message: "Location must be less than 100 characters" }).optional(),
+  bio: z.string().trim().max(500, { message: "Bio must be less than 500 characters" }).optional().or(z.literal('')),
+  location: z.string().trim().max(100, { message: "Location must be less than 100 characters" }).optional().or(z.literal('')),
   profilePicture: z.string().url({ message: "Profile picture must be a valid URL" }).optional().or(z.literal(''))
 });
 
